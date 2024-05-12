@@ -17,9 +17,9 @@ class ProductSeeder extends Seeder
             'title' => 'Elit reperendheit eu nostrud et.',
             'Price' => 19.03,
             'quantity' => 3,
-            'category' => 1,
+            'category_id' => 1,
             'brand_id' => 1,
-            'description' => 'Lorem ipsum dolor silit amet ocaecat cupidatat consequat eu euismod sint commodo aute. Fugiat commodo amet do dolore. Ulamco ullamce elit reperendheit nostrud et.'
+            'description' => 'Occaecat cupidatat consequat eu eiusmod sint commodo aute. Fugiat commodo amet do dolore. Ullamco ullamco nisi laboris cillum ea. Excepteur exercitation laborum culpa ex do ipsum id laboris ut ad est commodo. Commodo occaecat commodo ex laborum ea esse consequat pariatur tempor qui reprehenderit. Irure ullamco esse cupidatat voluptate in sunt do officia ullamco fugiat deserunt.'
         ]);
     }
 }
