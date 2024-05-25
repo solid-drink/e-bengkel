@@ -1,7 +1,9 @@
 <script setup>
 import { router, usePage } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { useCursor } from "element-plus";
+import { ref, h } from 'vue';
 import VueSweetalert2 from "vue-sweetalert2";
+import { iconProps } from "element-plus";
 
 
 const products = usePage().props.products;
@@ -55,6 +57,71 @@ const inStock = ref('')
 
 // End
 
+// for reset data on form
+const resetFormData = () => {
+    id.value = '';
+    title.value = '';
+    price.value = '';
+    quantity.value = '';
+    description.value = '';
+    productImages.value = [];
+    dialogImageUrl.value = '';
+};
+
+// delete image when editing a product
+const deleteImage = async (pimage, index) => {
+    try {
+        await router.delete('/admin/products/image/' + pimage.id, {
+            onSuccess: (page) => {
+                product_images.value.splice(index, 1);
+                Swal.fire({
+                    toast: true,
+                    icon: "success",
+                    position: "top-end",
+                    showConfirmButton: false,
+                    title: page.props.flash.success
+                });
+            }
+        })
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+
+//Update product method
+const updateProduct = async () => {
+    const formData = new FormData();
+    formData.append('title', title.value);
+    formData.append('price', price.value);
+    formData.append('quantity', quantity.value);
+    formData.append('description', description.value);
+    formData.append('category_id', category_id.value);
+    formData.append('brand_id', brand_id.value);
+    formData.append("_method", 'PUT');
+    // Append product images to the FormData
+    for (const image of productImages.value) {
+        formData.append('product_images[]', image.raw);
+    } try {
+        await router.post('products/update/' + id.value, formData, {
+            onSuccess: (page) => {
+                dialogVisible.value = false;
+                resetFormData();
+                Swal.fire({
+                    toast: true,
+                    icon: "success",
+                    position: "top-end",
+                    showConfirmButton: false,
+                    title: page.props.flash.success
+                });
+            }
+        })
+    } catch (err) {
+        console.log(err)
+    }
+}
+
+
 // Add Product method
 
 const AddProduct = async () => {
@@ -91,10 +158,30 @@ const AddProduct = async () => {
 }
 
 
+
+
+// Edit
+
 const openEditModal = (product) => {
+
+    // update data
+    id.value = product.id;
+    title.value = product.title;
+    price.value = product.price;
+    quantity.value = product.quantity;
+    description.value = product.description;
+    brand_id.value = product.brand_id;
+    category_id.value = product.category_id;
+    product_images.value = product.product_images;
+
     editMode.value = true;
     isAddProduct.value = false;
     dialogVisible.value = true;
+}
+
+const dialogCancel = () => {
+    dialogVisible.value = false;
+    resetFormData();
 }
 
 </script>
@@ -109,7 +196,7 @@ const openEditModal = (product) => {
 
             <!-- Form -->
 
-            <form class="w-full max-w-full mx-0" @submit.prevent="AddProduct()">
+            <form class="w-full max-w-full mx-0" @submit.prevent="editMode ? updateProduct() : AddProduct()">
                 <div class="w-full flex flex-row justify-center items-start p-2">
                     <!-- Left Column -->
                     <div class="m-2 w-full mr-9">
@@ -147,7 +234,7 @@ const openEditModal = (product) => {
                                 <option value="" selected>Select a Category</option>
                                 <option v-for="category in categories" :key="category.id" :value="category.id">{{
                                     category.name
-                                    }}</option>
+                                }}</option>
                             </select>
                         </div>
                         <div class="relative z-0 w-full mb-5 group">
@@ -193,11 +280,30 @@ const openEditModal = (product) => {
                         </div>
 
                         <!-- End Images Upload -->
+
+                        <!-- list of images for selected product -->
+
+                        <div class="flex flex-nowrap mb-8 ">
+                            <div v-for="(pimage, index) in product_images" :key="pimage.id" class="relative w-32 h-32 ">
+                                <img class="w-24 h-20 rounded" :src="`/${pimage.image}`" alt="">
+                                <span
+                                    class="absolute top-0 right-8 transform -translate-y-1/2 w-3.5 h-3.5 bg-red-400 border-2 border-white dark:border-gray-800 rounded-full">
+                                    <span @click="deleteImage(pimage, index)"
+                                        class=" p-10 text-white text-xs font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                        X
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- end of listed -->
+
+
                     </div>
                 </div>
 
                 <div class="flex justify-end items-center space-x-4">
-                    <button data-modal-toggle="deleteModal" type="button" @click="resetFormData(dialogVisible = false);"
+                    <button data-modal-toggle="deleteModal" type="button" @click="dialogCancel"
                         class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-red-300 hover:bg-red-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10 dark:bg-red-700 dark:text-red-300 dark:border-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-600">
                         Cancel
                     </button>
@@ -208,10 +314,9 @@ const openEditModal = (product) => {
             </form>
         </el-dialog>
 
-
         <!-- End -->
 
-        <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
+        <div class="mx-auto max-w-screen-2xl px-4 lg:px-12">
             <!-- Start coding here -->
             <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
                 <div
@@ -368,7 +473,7 @@ const openEditModal = (product) => {
                                         class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Out
                                         of Stock</span>
                                 </td>
-                                
+
                                 <td class="px-4 py-3">
                                     <button v-if="product.published == 0" type="button"
                                         class="px-3 py-2 text-xs font-medium text-center text-white bg-green-700 rounded-lg hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Published</button>
@@ -377,8 +482,7 @@ const openEditModal = (product) => {
                                 </td>
 
                                 <td class="px-4 py-3 flex items-center justify-end">
-                                    <button id="apple-imac-27-dropdown-button"
-                                        data-dropdown-toggle="apple-imac-27-dropdown"
+                                    <button :id="`${product.id}-button`" :data-dropdown-toggle="`${product.id}`"
                                         class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100"
                                         type="button">
                                         <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
@@ -387,21 +491,18 @@ const openEditModal = (product) => {
                                                 d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
                                         </svg>
                                     </button>
-                                    <div id="apple-imac-27-dropdown"
+                                    <div :id="`${product.id}`"
                                         class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                                         <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
-                                            aria-labelledby="apple-imac-27-dropdown-button">
+                                            :aria-labelledby="`${product.id}-button`">
+
                                             <li>
-                                                <a href="#"
-                                                    class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Show</a>
-                                            </li>
-                                            <li>
-                                                <button @click="openEditModal(product)"
-                                                    class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</button>
+                                                <a href="#" @click="openEditModal(product)"
+                                                    class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
                                             </li>
                                         </ul>
                                         <div class="py-1">
-                                            <a href="#"
+                                            <a href="#" @click="deleteProduct(product, index)"
                                                 class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete</a>
                                         </div>
                                     </div>
