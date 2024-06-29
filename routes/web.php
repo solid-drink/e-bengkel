@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\ProductController;
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\User\UserController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Models\Product;
 use Illuminate\Foundation\Application;
@@ -13,14 +14,7 @@ use Inertia\Inertia;
 
 //  User Routes
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [UserController::class, 'index'])->name('user.home');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -50,6 +44,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/products/store', [ProductController::class, 'store'])->name('admin.products.store');
     Route::put('/products/update/{id}', [ProductController::class, 'update'])->name('admin.products.update');
     Route::delete('/products/image/{id}', [ProductController::class, 'deleteImage'])->name('admin.products.image.delete');
+    Route::delete('products/destroy/{id}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
 });
 
 // End

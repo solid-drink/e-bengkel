@@ -4,9 +4,13 @@ import { useCursor } from "element-plus";
 import { ref, h } from 'vue';
 import VueSweetalert2 from "vue-sweetalert2";
 import { iconProps } from "element-plus";
+import { Plus } from '@element-plus/icons-vue'
+import { FwbPagination } from 'flowbite-vue'
 
 
-const products = usePage().props.products;
+defineProps({
+    products: Array
+})
 
 const brands = usePage().props.brands;
 const categories = usePage().props.categories;
@@ -121,6 +125,39 @@ const updateProduct = async () => {
     }
 }
 
+// delete product method
+const deleteProduct = (product, index) => {
+    Swal.fire({
+        title: 'Are you Sure',
+        text: "This actions cannot undo!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        cancelButtonText: 'No',
+        confirmButtonText: 'Yes, delete!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            try {
+                router.delete('products/destroy/' + product.id, {
+                    onSuccess: (page) => {
+                        this.delete(product, index);
+                        Swal.fire({
+                            toast: true,
+                            icon: "success",
+                            position: "top-end",
+                            showConfirmButton: false,
+                            title: page.props.flash.success
+                        });
+                    }
+                })
+            } catch (err) {
+                console.log(err)
+            }
+        }
+    })
+}
+
 
 // Add Product method
 
@@ -183,7 +220,6 @@ const dialogCancel = () => {
     dialogVisible.value = false;
     resetFormData();
 }
-
 </script>
 
 
@@ -234,7 +270,7 @@ const dialogCancel = () => {
                                 <option value="" selected>Select a Category</option>
                                 <option v-for="category in categories" :key="category.id" :value="category.id">{{
                                     category.name
-                                }}</option>
+                                    }}</option>
                             </select>
                         </div>
                         <div class="relative z-0 w-full mb-5 group">
@@ -343,10 +379,18 @@ const dialogCancel = () => {
                         class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
                         <button type="button" @click="openAddModal"
                             class="flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                            <svg class="h-3.5 w-3.5 mr-2" fill="currentColor" viewbox="0 0 20 20"
+                            <!-- <svg class="h-3.5 w-3.5 mr-2" fill="currentColor" viewbox="0 0 20 20"
                                 xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path clip-rule="evenodd" fill-rule="evenodd"
                                     d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                            </svg> -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="icon icon-tabler icons-tabler-outline icon-tabler-plus mr-2">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 5l0 14" />
+                                <path d="M5 12l14 0" />
                             </svg>
                             Add Product
                         </button>
@@ -456,7 +500,8 @@ const dialogCancel = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="product in products" :key="product.id" class="border-b dark:border-gray-700">
+                            <tr v-for="product in products.data" :key="product.id"
+                                class="border-b dark:border-gray-700">
                                 <th scope="row"
                                     class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     {{ product.title }}
@@ -465,7 +510,6 @@ const dialogCancel = () => {
                                 <td class="px-4 py-3">{{ product.brand.name }}</td>
                                 <td class="px-4 py-3">{{ product.quantity }}</td>
                                 <td class="px-4 py-3">$ {{ product.price }}</td>
-
                                 <td class="px-4 py-3">
                                     <span v-if="product.inStock == 0"
                                         class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">inStock</span>
@@ -473,14 +517,12 @@ const dialogCancel = () => {
                                         class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Out
                                         of Stock</span>
                                 </td>
-
                                 <td class="px-4 py-3">
                                     <button v-if="product.published == 0" type="button"
                                         class="px-3 py-2 text-xs font-medium text-center text-white bg-green-700 rounded-lg hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Published</button>
                                     <button v-else type="button"
                                         class="px-3 py-2 text-xs font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">UnPublished</button>
                                 </td>
-
                                 <td class="px-4 py-3 flex items-center justify-end">
                                     <button :id="`${product.id}-button`" :data-dropdown-toggle="`${product.id}`"
                                         class="inline-flex items-center p-0.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none dark:text-gray-400 dark:hover:text-gray-100"
@@ -488,14 +530,14 @@ const dialogCancel = () => {
                                         <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
                                             xmlns="http://www.w3.org/2000/svg">
                                             <path
-                                                d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z">
+                                            </path>
                                         </svg>
                                     </button>
                                     <div :id="`${product.id}`"
                                         class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
                                         <ul class="py-1 text-sm text-gray-700 dark:text-gray-200"
                                             :aria-labelledby="`${product.id}-button`">
-
                                             <li>
                                                 <a href="#" @click="openEditModal(product)"
                                                     class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Edit</a>
@@ -510,62 +552,65 @@ const dialogCancel = () => {
                             </tr>
                         </tbody>
                     </table>
+
                 </div>
-                <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
+                <!-- <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
                     aria-label="Table navigation">
                     <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
                         Showing
-                        <span class="font-semibold text-gray-900 dark:text-white">1-10</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ products.from }}</span>
+                        to
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ products.to }}</span>
                         of
-                        <span class="font-semibold text-gray-900 dark:text-white">1000</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ products.total }}</span>
                     </span>
                     <ul class="inline-flex items-stretch -space-x-px">
                         <li>
-                            <a href="#"
+                            <button @click="fetchProducts(products.prev_page_url)" :disabled="!products.prev_page_url"
                                 class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
                                 <span class="sr-only">Previous</span>
-                                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
+                                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd"
                                         d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                                         clip-rule="evenodd" />
                                 </svg>
-                            </a>
+                            </button>
+                        </li>
+                        <li v-for="page in pages" :key="page">
+                            <button @click="fetchProducts(getPageUrl(page))"
+                                :class="{ 'text-gray-700 border-gray-300 bg-gray-300 border border-y-gray-300': page === products.current_page, 'text-gray-500 bg-white border  border-gray-300 hover:bg-gray-100 hover:text-gray-700': page !== products.current_page }"
+                                class="flex items-center justify-center text-sm py-2 px-3 leading-tight dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                                {{ page }}
+                            </button>
                         </li>
                         <li>
-                            <a href="#"
-                                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
-                        </li>
-                        <li>
-                            <a href="#"
-                                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">2</a>
-                        </li>
-                        <li>
-                            <a href="#" aria-current="page"
-                                class="flex items-center justify-center text-sm z-10 py-2 px-3 leading-tight text-primary-600 bg-primary-50 border border-primary-300 hover:bg-primary-100 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">3</a>
-                        </li>
-                        <li>
-                            <a href="#"
-                                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">...</a>
-                        </li>
-                        <li>
-                            <a href="#"
-                                class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">100</a>
-                        </li>
-                        <li>
-                            <a href="#"
+                            <button @click="fetchProducts(products.next_page_url)" :disabled="!products.next_page_url"
                                 class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
                                 <span class="sr-only">Next</span>
-                                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewbox="0 0 20 20"
+                                <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd"
                                         d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                                         clip-rule="evenodd" />
                                 </svg>
-                            </a>
+                            </button>
                         </li>
                     </ul>
-                </nav>
+                </nav> -->
+                <div
+                    class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4">
+                    <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+                        Showing
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ products.from }}</span>
+                        to
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ products.to }}</span>
+                        of
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ products.total }}</span>
+                    </span>
+                    <fwb-pagination v-model="currentPage" :total-pages="100" show-icons></fwb-pagination>
+                </div>
+
             </div>
         </div>
     </section>

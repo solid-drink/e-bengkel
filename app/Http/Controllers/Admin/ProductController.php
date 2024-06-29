@@ -15,10 +15,9 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category', 'brand', 'product_images')->get();
+        $products = Product::with('category', 'brand', 'product_images')->paginate(10);
         $brands = Brand::get();
         $categories = Category::get();
-
 
         return Inertia::render(
             'Admin/Product/Index',
@@ -94,5 +93,11 @@ class ProductController extends Controller
     {
         $image = ProductImage::where('id', $id)->delete();
         return redirect()->route('admin.products.index')->with('success', 'Image deleted successfully.');
+    }
+
+    public function destroy($id)
+    {
+        $product = Product::findOrFail($id)->delete();
+        return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
     }
 }
